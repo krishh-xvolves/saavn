@@ -1,0 +1,104 @@
+{
+  "name": "saavn",
+  "version": "0.1.0",
+  "description": "High-performance unofficial JioSaavn music API for songs, 320kbps audio streams, albums, playlists, lyrics, search, and artists.",
+  "type": "module",
+  "keywords": [
+    "jio",
+    "saavn",
+    "jiosaavn",
+    "jiosaavn-api",
+    "jio-saavn",
+    "saavn-api",
+    "music-api",
+    "songs",
+    "audio-api",
+    "hono",
+    "cloudflare-workers",
+    "vercel",
+    "openapi"
+  ],
+  "license": "MIT",
+  "repository": "https://github.com/shnwazdeveloper/shnwazdev-jiosaavn-api",
+  "author": "shnwazdev",
+  "main": "api/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "imports": {
+    "#modules/index": {
+      "types": "./src/modules/index.ts",
+      "production": "./dist/modules/index.js",
+      "default": "./src/modules/index.js"
+    },
+    "#modules/*.model": {
+      "types": "./src/modules/*.model.ts",
+      "production": "./dist/modules/*.model.js",
+      "default": "./src/modules/*.model.js"
+    },
+    "#modules/*": {
+      "types": "./src/modules/*/index.ts",
+      "production": "./dist/modules/*/index.js",
+      "default": "./src/modules/*/index.js"
+    },
+    "#common/*": {
+      "types": "./src/common/*/index.ts",
+      "production": "./dist/common/*/index.js",
+      "default": "./src/common/*/index.js"
+    }
+  },
+  "scripts": {
+    "dev": "tsx watch src/local.ts",
+    "start": "node dist/local.js",
+    "prebuild": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "tsc && tsc-alias",
+    "format": "prettier --write \"./**/*.{js,ts,json}\"",
+    "lint": "eslint .",
+    "lint:fix": "npm run lint -- --fix",
+    "test": "vitest run",
+    "test:ui": "vitest --ui",
+    "deploy": "wrangler deploy",
+    "deploy:cf": "wrangler deploy",
+    "dev:cf": "wrangler dev",
+    "vercel:dev": "npx vercel dev",
+    "vercel:deploy": "npx vercel --prod",
+    "spell-check": "cspell ."
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.0.10",
+    "@hono/zod-openapi": "^0.19.2",
+    "@hono/zod-validator": "^0.4.3",
+    "@scalar/hono-api-reference": "^0.7.4",
+    "hono": "^4.13.9",
+    "node-forge": "^1.3.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@kolhe/eslint-config": "2.2.6",
+    "@types/node": "^22.13.14",
+    "@types/node-forge": "^1.3.11",
+    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/ui": "^4.1.11",
+    "cspell": "8.18.1",
+    "eslint": "^9.23.0",
+    "eslint-plugin-prettier": "^5.2.5",
+    "jiti": "^2.7.0",
+    "prettier": "^3.5.3",
+    "tsc-alias": "^1.8.13",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.2",
+    "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1"
+  }
+}

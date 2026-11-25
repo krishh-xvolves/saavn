@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "saavn",
+  "account_id": "a440d05f953369e6d69d4396ceae3dc5",
+  "main": "src/server.ts",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "jio.shnwaz.dev", "custom_domain": true },
+    { "pattern": "api.shnwaz.dev", "custom_domain": true }
+  ]
+}

@@ -1,0 +1,1814 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>ShnwazDev JioSaavn API</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <meta name="description" content="High-performance TypeScript music streaming and metadata API for JioSaavn songs, 320kbps streams, albums, artists, and lyrics.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --bg: #07090e;
+        --bg-card: rgba(13, 17, 24, 0.7);
+        --bg-card-hover: rgba(20, 27, 39, 0.85);
+        --border: rgba(255, 255, 255, 0.08);
+        --border-highlight: rgba(255, 255, 255, 0.16);
+        --text: #f8fafc;
+        --text-muted: #94a3b8;
+        --text-dim: #64748b;
+        --accent: #38bdf8;
+        --accent-soft: rgba(56, 189, 248, 0.1);
+        --accent-hover: #7dd3fc;
+        --radius-xs: 6px;
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --transition: 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        color-scheme: dark;
+      }
+
+      body {
+        font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* Subtle Grid Background (Pure Pattern, Strictly Zero Glow) */
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.04;
+        background-image: linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px);
+        background-size: 32px 32px;
+        z-index: 0;
+      }
+
+      /* Motion Keyframes */
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes livePulse {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.35;
+        }
+      }
+
+      @keyframes tabSwitch {
+        from {
+          opacity: 0.7;
+          transform: translateY(3px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Header */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(7, 9, 14, 0.85);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        animation: fadeUp 0.4s var(--transition) both;
+      }
+
+      .topbar-inner {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 14px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        color: var(--text);
+        font-weight: 800;
+        font-size: 1.02rem;
+        letter-spacing: -0.01em;
+      }
+
+      .brand-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        background: var(--accent-soft);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        color: var(--accent);
+        border-radius: var(--radius-xs);
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .domain-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-muted);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        padding: 3px 9px;
+        border-radius: 999px;
+      }
+
+      .pulse-dot {
+        width: 6px;
+        height: 6px;
+        background: #34d399;
+        border-radius: 50%;
+        animation: livePulse 2s ease-in-out infinite;
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .nav-item {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: var(--radius-xs);
+        transition: color var(--transition), background var(--transition);
+      }
+
+      .nav-item:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .nav-item.highlight {
+        color: var(--accent);
+      }
+
+      /* Layout */
+      main {
+        position: relative;
+        z-index: 1;
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 44px 20px 80px;
+      }
+
+      .section {
+        margin-bottom: 64px;
+      }
+
+      .section-head {
+        max-width: 720px;
+        margin-bottom: 28px;
+      }
+
+      .section-head h2 {
+        font-size: 1.85rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #fff;
+        margin-bottom: 8px;
+      }
+
+      .section-head p {
+        color: var(--text-muted);
+        font-size: 0.98rem;
+        line-height: 1.55;
+      }
+
+      /* Hero Section */
+      .hero-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 36px;
+        align-items: stretch;
+        margin-bottom: 60px;
+      }
+
+      .hero-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .release-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--accent);
+        background: var(--accent-soft);
+        border: 1px solid rgba(56, 189, 248, 0.25);
+        padding: 5px 12px;
+        border-radius: 999px;
+        margin-bottom: 16px;
+        width: fit-content;
+        animation: fadeUp 0.4s var(--transition) both;
+      }
+
+      h1 {
+        font-size: clamp(2.3rem, 4vw, 3.4rem);
+        font-weight: 800;
+        line-height: 1.14;
+        letter-spacing: -0.03em;
+        color: #fff;
+        margin-bottom: 16px;
+        animation: fadeUp 0.5s var(--transition) 0.05s both;
+      }
+
+      .hero-lead {
+        color: var(--text-muted);
+        font-size: 1.05rem;
+        line-height: 1.6;
+        margin-bottom: 24px;
+        animation: fadeUp 0.5s var(--transition) 0.1s both;
+      }
+
+      .hero-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+        animation: fadeUp 0.5s var(--transition) 0.15s both;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        font-size: 13px;
+        font-weight: 700;
+        border-radius: var(--radius-sm);
+        text-decoration: none;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: transform var(--transition), background var(--transition), border-color var(--transition);
+      }
+
+      .btn:active {
+        transform: scale(0.98);
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #05070a;
+        border-color: var(--accent);
+      }
+
+      .btn-primary:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+        transform: translateY(-2px);
+      }
+
+      .btn-secondary {
+        background: var(--bg-card);
+        color: var(--text);
+        border-color: var(--border-highlight);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      .btn-secondary:hover {
+        background: var(--bg-card-hover);
+        border-color: rgba(255, 255, 255, 0.28);
+        transform: translateY(-2px);
+      }
+
+      /* Quick Curl Box */
+      .curl-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        background: rgba(13, 17, 24, 0.9);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 8px 12px;
+        margin-bottom: 24px;
+        animation: fadeUp 0.5s var(--transition) 0.18s both;
+      }
+
+      .curl-bar code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        color: #cbd5e1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .curl-copy-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 700;
+        padding: 5px 10px;
+        border-radius: var(--radius-xs);
+        cursor: pointer;
+        transition: background var(--transition);
+        flex-shrink: 0;
+      }
+
+      .curl-copy-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      /* Stats 2x2 Grid */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        animation: fadeUp 0.5s var(--transition) 0.22s both;
+      }
+
+      .stat-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 14px 16px;
+        transition: transform var(--transition), background var(--transition), border-color var(--transition);
+      }
+
+      .stat-card:hover {
+        background: var(--bg-card-hover);
+        border-color: var(--border-highlight);
+        transform: translateY(-2px);
+      }
+
+      .stat-header {
+        margin-bottom: 4px;
+      }
+
+      .stat-badge {
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--accent);
+      }
+
+      .stat-title {
+        display: block;
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #fff;
+        margin-bottom: 2px;
+      }
+
+      .stat-desc {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+      }
+
+      /* Interactive Hero Console */
+      .hero-console {
+        background: var(--bg-card);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+        animation: fadeUp 0.5s var(--transition) 0.15s both;
+      }
+
+      .console-topbar {
+        background: rgba(13, 17, 24, 0.95);
+        border-bottom: 1px solid var(--border);
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .window-dots {
+        display: flex;
+        gap: 6px;
+      }
+
+      .window-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+
+      .window-dot.red { background: #ef4444; }
+      .window-dot.yellow { background: #f59e0b; }
+      .window-dot.green { background: #10b981; }
+
+      .console-tabs {
+        display: flex;
+        gap: 4px;
+      }
+
+      .console-tab {
+        background: transparent;
+        border: 1px solid transparent;
+        color: var(--text-muted);
+        font-size: 11px;
+        font-weight: 700;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+        padding: 4px 10px;
+        border-radius: var(--radius-xs);
+        cursor: pointer;
+        transition: all var(--transition);
+      }
+
+      .console-tab:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .console-tab.active {
+        color: var(--accent);
+        background: var(--accent-soft);
+        border-color: rgba(56, 189, 248, 0.25);
+      }
+
+      .console-meta-bar {
+        background: rgba(9, 12, 18, 0.6);
+        border-bottom: 1px solid var(--border);
+        padding: 8px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 11.5px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+      }
+
+      .request-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #fff;
+        font-weight: 700;
+      }
+
+      .http-method {
+        color: var(--accent);
+        background: var(--accent-soft);
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 10.5px;
+      }
+
+      .response-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #34d399;
+        font-weight: 700;
+      }
+
+      .console-body {
+        padding: 18px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        line-height: 1.55;
+        color: #e2e8f0;
+        flex: 1;
+        overflow-x: auto;
+        min-height: 280px;
+      }
+
+      .console-body pre {
+        animation: tabSwitch 0.25s var(--transition) both;
+      }
+
+      .console-footer {
+        border-top: 1px solid var(--border);
+        padding: 10px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(9, 12, 18, 0.85);
+        font-size: 11px;
+        color: var(--text-dim);
+      }
+
+      .copy-json-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        font-size: 11px;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: var(--radius-xs);
+        cursor: pointer;
+        transition: all var(--transition);
+      }
+
+      .copy-json-btn:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      /* Feature Cards Grid */
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .feature-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 22px;
+        transition: transform var(--transition), background var(--transition), border-color var(--transition);
+      }
+
+      .feature-card:hover {
+        background: var(--bg-card-hover);
+        border-color: var(--border-highlight);
+        transform: translateY(-3px);
+      }
+
+      .feature-icon-wrapper {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-sm);
+        background: var(--accent-soft);
+        border: 1px solid rgba(56, 189, 248, 0.22);
+        color: var(--accent);
+        margin-bottom: 16px;
+      }
+
+      .feature-card h3 {
+        font-size: 1.08rem;
+        font-weight: 800;
+        color: #fff;
+        margin-bottom: 6px;
+        letter-spacing: -0.01em;
+      }
+
+      .feature-card p {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        line-height: 1.55;
+      }
+
+      /* Route Explorer Section */
+      .explorer-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .search-input-wrapper {
+        position: relative;
+        width: 100%;
+      }
+
+      .search-icon-svg {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-dim);
+        pointer-events: none;
+      }
+
+      .route-filter-input {
+        width: 100%;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 12px 14px 12px 42px;
+        font-size: 13.5px;
+        font-family: inherit;
+        color: #fff;
+        outline: none;
+        transition: border-color var(--transition);
+      }
+
+      .route-filter-input:focus {
+        border-color: rgba(56, 189, 248, 0.4);
+      }
+
+      .route-filter-input::placeholder {
+        color: var(--text-dim);
+      }
+
+      .category-chips {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .chip-btn {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        font-size: 12px;
+        font-weight: 700;
+        padding: 6px 14px;
+        border-radius: var(--radius-xs);
+        cursor: pointer;
+        transition: all var(--transition);
+      }
+
+      .chip-btn:hover {
+        color: var(--text);
+        border-color: var(--border-highlight);
+      }
+
+      .chip-btn.active {
+        background: var(--accent-soft);
+        color: var(--accent);
+        border-color: rgba(56, 189, 248, 0.4);
+      }
+
+      /* Route Groups & Tables */
+      .route-explorer-container {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .route-group-panel {
+        background: var(--bg-card);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        transition: border-color var(--transition);
+      }
+
+      .route-group-header {
+        padding: 14px 18px;
+        background: rgba(13, 17, 24, 0.85);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .route-group-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .route-group-title h3 {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #fff;
+      }
+
+      .count-badge {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--accent);
+        background: var(--accent-soft);
+        padding: 2px 8px;
+        border-radius: 999px;
+      }
+
+      .route-table {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .route-row {
+        display: grid;
+        grid-template-columns: 56px 1fr 1.3fr auto;
+        gap: 14px;
+        align-items: center;
+        padding: 12px 18px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        transition: background var(--transition);
+      }
+
+      .route-row:last-child {
+        border-bottom: none;
+      }
+
+      .route-row:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .method-tag {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 900;
+        text-align: center;
+        color: #0369a1;
+        background: #e0f2fe;
+        padding: 2px 0;
+        border-radius: 4px;
+      }
+
+      .route-path {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #fff;
+        overflow-wrap: anywhere;
+      }
+
+      .route-info {
+        font-size: 12.5px;
+        color: var(--text-muted);
+      }
+
+      .copy-url-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-dim);
+        font-size: 11px;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: var(--radius-xs);
+        cursor: pointer;
+        transition: all var(--transition);
+      }
+
+      .copy-url-btn:hover {
+        color: #fff;
+        border-color: var(--border-highlight);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      /* Footer */
+      .footer {
+        border-top: 1px solid var(--border);
+        padding: 32px 20px;
+        max-width: 1180px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        color: var(--text-muted);
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+
+      .footer a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
+      }
+
+      /* Responsive Media Queries */
+      @media (max-width: 960px) {
+        .hero-grid {
+          grid-template-columns: 1fr;
+          gap: 28px;
+        }
+        .features-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 720px) {
+        .features-grid {
+          grid-template-columns: 1fr;
+        }
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+        .route-row {
+          grid-template-columns: 56px 1fr;
+          gap: 8px;
+        }
+        .route-info {
+          grid-column: 2 / -1;
+        }
+        .copy-url-btn {
+          grid-column: 2 / -1;
+          width: fit-content;
+        }
+        .topbar-inner {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="/">
+          <span class="brand-badge">SD</span>
+          <span>ShnwazDev JioSaavn API</span>
+          <span class="domain-chip">
+            <span class="pulse-dot"></span>
+            jio.shnwaz.dev
+          </span>
+        </a>
+        <nav class="nav-links">
+          <a class="nav-item highlight" href="/docs">Docs</a>
+          <a class="nav-item" href="/swagger">OpenAPI</a>
+          <a class="nav-item" href="/health">Status</a>
+          <a class="nav-item" href="https://github.com/shnwazdeveloper/shnwazdev-jiosaavn-api" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero-grid">
+        <div class="hero-content">
+          <div class="release-pill">
+            <span class="pulse-dot"></span>
+            <span>Edge Infrastructure • Zero Rate Limits</span>
+          </div>
+          <h1>Build faster with the JioSaavn API</h1>
+          <p class="hero-lead">
+            Access songs, 320kbps audio streams, albums, artists, browse feeds, synced lyrics, playlists, podcasts, and trending routes with clean JSON responses on <strong>jio.shnwaz.dev</strong>.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="/docs">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+              <span>Explore Docs</span>
+            </a>
+            <a class="btn btn-secondary" href="/swagger">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+              <span>OpenAPI</span>
+            </a>
+            <a class="btn btn-secondary" href="/api/endpoints">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              <span>Endpoints</span>
+            </a>
+            <a class="btn btn-secondary" href="/api/limits">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              <span>Limits</span>
+            </a>
+          </div>
+
+          <div class="curl-bar">
+            <code id="curl-text">curl "https://jio.shnwaz.dev/api/search?query=Believer"</code>
+            <button class="curl-copy-btn" id="copy-curl-btn" type="button">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span>Copy</span>
+            </button>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-header">
+                <span class="stat-badge">Comprehensive</span>
+              </div>
+              <strong class="stat-title">47+ Endpoints</strong>
+              <span class="stat-desc">Songs, albums, artists, browse, lyrics, radio, trending feeds</span>
+            </div>
+            <div class="stat-card">
+              <div class="stat-header">
+                <span class="stat-badge">High Bitrate</span>
+              </div>
+              <strong class="stat-title">320kbps Streams</strong>
+              <span class="stat-desc">Direct lossless CDN audio stream URLs in MP4 and AAC format</span>
+            </div>
+            <div class="stat-card">
+              <div class="stat-header">
+                <span class="stat-badge">Unlimited</span>
+              </div>
+              <strong class="stat-title">Zero Rate Limits</strong>
+              <span class="stat-desc">Direct public access with no throttling or token requirement</span>
+            </div>
+            <div class="stat-card">
+              <div class="stat-header">
+                <span class="stat-badge">Ultra Fast</span>
+              </div>
+              <strong class="stat-title">Edge Deployed</strong>
+              <span class="stat-desc">Sub-30ms global edge response times on Cloudflare Workers</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="hero-console">
+          <div class="console-topbar">
+            <div class="window-dots">
+              <span class="window-dot red"></span>
+              <span class="window-dot yellow"></span>
+              <span class="window-dot green"></span>
+            </div>
+            <div class="console-tabs">
+              <button class="console-tab active" type="button" data-console-tab="search">Search</button>
+              <button class="console-tab" type="button" data-console-tab="songs">Songs</button>
+              <button class="console-tab" type="button" data-console-tab="trending">Trending</button>
+              <button class="console-tab" type="button" data-console-tab="health">Health</button>
+            </div>
+          </div>
+          <div class="console-meta-bar">
+            <div class="request-pill">
+              <span class="http-method">GET</span>
+              <span id="console-path">/api/search?query=Believer</span>
+            </div>
+            <span class="response-status" id="console-status">200 OK • 16ms</span>
+          </div>
+          <div class="console-body">
+            <pre><code id="console-json">{
+  "success": true,
+  "data": {
+    "total": 1,
+    "start": 0,
+    "results": [
+      {
+        "id": "0W6DtW_N",
+        "name": "Believer",
+        "type": "song",
+        "year": "2017",
+        "duration": 204,
+        "label": "Interscope Records",
+        "language": "english",
+        "downloadUrl": "320kbps"
+      }
+    ]
+  }
+}</code></pre>
+          </div>
+          <div class="console-footer">
+            <span>Powered by Hono &amp; Edge Runtimes</span>
+            <button class="copy-json-btn" id="copy-json-btn" type="button">Copy JSON</button>
+          </div>
+        </aside>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>High-Performance Music Infrastructure</h2>
+          <p>
+            Engineered for developers building music players, bots, mobile apps, and streaming web services without complex setup.
+          </p>
+        </div>
+        <div class="features-grid">
+          <article class="feature-card">
+            <div class="feature-icon-wrapper">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            <h3>Full-Spectrum Search</h3>
+            <p>Unified and scoped search for songs, albums, artists, and playlists with instant multi-page results.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon-wrapper">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+            </div>
+            <h3>Editorial Browse Feeds</h3>
+            <p>Home feeds, charts, genres, mood channels, city trend modules, and live featured radio stations.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon-wrapper">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            </div>
+            <h3>320kbps Audio Quality</h3>
+            <p>Direct CDN audio URLs for 12, 48, 96, 160, and 320kbps qualities with artist metadata.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon-wrapper">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            </div>
+            <h3>Zero Rate Limits</h3>
+            <p>No app-level request throttling, registration, or API keys. Designed for seamless integrations.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon-wrapper">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            </div>
+            <h3>OpenAPI 3.1 &amp; Scalar</h3>
+            <p>Interactive API reference with real-time test request execution and machine-readable Swagger JSON.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon-wrapper">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+            <h3>Synced Lyrics &amp; Podcasts</h3>
+            <p>Time-synchronized lyrics, podcast episodes, show overviews, ringtone previews, and share URLs.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>Endpoint Directory (47 Routes)</h2>
+          <p>
+            Test routes in real time from your custom domain <strong>jio.shnwaz.dev</strong> or through the interactive Scalar API docs.
+          </p>
+        </div>
+
+        <div class="explorer-controls">
+          <div class="search-input-wrapper">
+            <svg class="search-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input class="route-filter-input" id="route-filter" type="text" placeholder="Filter routes... (e.g. search, songs, trending, lyrics, artists)" autocomplete="off">
+          </div>
+          <div class="category-chips">
+            <button class="chip-btn active" type="button" data-chip="all">All (47)</button>
+            <button class="chip-btn" type="button" data-chip="search">Search (6)</button>
+            <button class="chip-btn" type="button" data-chip="songs">Songs (5)</button>
+            <button class="chip-btn" type="button" data-chip="album">Album (1)</button>
+            <button class="chip-btn" type="button" data-chip="artists">Artists (6)</button>
+            <button class="chip-btn" type="button" data-chip="browse">Browse (16)</button>
+            <button class="chip-btn" type="button" data-chip="lyrics">Lyrics (3)</button>
+            <button class="chip-btn" type="button" data-chip="playlists">Playlists (1)</button>
+            <button class="chip-btn" type="button" data-chip="podcasts">Podcasts (3)</button>
+            <button class="chip-btn" type="button" data-chip="trending">Trending (6)</button>
+          </div>
+        </div>
+
+        <div class="route-explorer-container">
+          <!-- Search -->
+          <div class="route-group-panel" data-category="search">
+            <div class="route-group-header">
+              <div class="route-group-title">
+                <h3>Search</h3>
+                <span class="count-badge">6 routes</span>
+              </div>
+            </div>
+            <div class="route-table">
+              <div class="route-row" data-path="/api/search?query={query}" data-desc="unified search for songs, albums, artists, playlists">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/search?query={query}</code>
+                <span class="route-info">Unified search for songs, albums, artists, playlists</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/search?query={query}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/search/songs?query={query}" data-desc="search songs with pagination support">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/search/songs?query={query}</code>
+                <span class="route-info">Search songs with pagination support</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/search/songs?query={query}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/search/albums?query={query}" data-desc="search music albums by title">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/search/albums?query={query}</code>
+                <span class="route-info">Search music albums by title</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/search/albums?query={query}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/search/artists?query={query}" data-desc="search artists with details">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/search/artists?query={query}</code>
+                <span class="route-info">Search artists with details</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/search/artists?query={query}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/search/playlists?query={query}" data-desc="search user and editorial playlists">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/search/playlists?query={query}</code>
+                <span class="route-info">Search user and editorial playlists</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/search/playlists?query={query}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/search/top-query?query={query}" data-desc="retrieve top matching autocomplete query">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/search/top-query?query={query}</code>
+                <span class="route-info">Retrieve top matching autocomplete query</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/search/top-query?query={query}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Songs -->
+          <div class="route-group-panel" data-category="songs">
+            <div class="route-group-header">
+              <div class="route-group-title">
+                <h3>Songs</h3>
+                <span class="count-badge">5 routes</span>
+              </div>
+            </div>
+            <div class="route-table">
+              <div class="route-row" data-path="/api/songs?ids={ids}" data-desc="retrieve multiple songs by comma-separated ids">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/songs?ids={ids}</code>
+                <span class="route-info">Retrieve multiple songs by comma-separated IDs</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/songs?ids={ids}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/songs?link={url}" data-desc="retrieve song details by jiosaavn song url">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/songs?link={url}</code>
+                <span class="route-info">Retrieve song details by JioSaavn song URL</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/songs?link={url}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/songs/{id}" data-desc="retrieve single song details with 320kbps streams">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/songs/{id}</code>
+                <span class="route-info">Retrieve single song details with 320kbps streams</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/songs/{id}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/songs/{id}/suggestions" data-desc="retrieve recommended songs based on song id">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/songs/{id}/suggestions</code>
+                <span class="route-info">Retrieve recommended songs based on song ID</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/songs/{id}/suggestions" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/songs/station" data-desc="create a continuous song radio station">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/songs/station</code>
+                <span class="route-info">Create a continuous song radio station</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/songs/station" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Album -->
+          <div class="route-group-panel" data-category="album">
+            <div class="route-group-header">
+              <div class="route-group-title">
+                <h3>Album</h3>
+                <span class="count-badge">1 route</span>
+              </div>
+            </div>
+            <div class="route-table">
+              <div class="route-row" data-path="/api/albums?id={id}" data-desc="retrieve album metadata, artist credits, and track list">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/albums?id={id}</code>
+                <span class="route-info">Retrieve album metadata, artist credits, and track list</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/albums?id={id}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Artists -->
+          <div class="route-group-panel" data-category="artists">
+            <div class="route-group-header">
+              <div class="route-group-title">
+                <h3>Artists</h3>
+                <span class="count-badge">6 routes</span>
+              </div>
+            </div>
+            <div class="route-table">
+              <div class="route-row" data-path="/api/artists?id={id}" data-desc="retrieve artists by id or jiosaavn profile link">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/artists?id={id}</code>
+                <span class="route-info">Retrieve artists by ID or JioSaavn profile link</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/artists?id={id}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/artists/{id}" data-desc="retrieve artist bio and profile overview by id">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/artists/{id}</code>
+                <span class="route-info">Retrieve artist bio and profile overview by ID</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/artists/{id}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/artists/{id}/albums" data-desc="retrieve all albums released by artist">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/artists/{id}/albums</code>
+                <span class="route-info">Retrieve all albums released by artist</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/artists/{id}/albums" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/artists/{id}/songs" data-desc="retrieve top songs by artist with sorting">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/artists/{id}/songs</code>
+                <span class="route-info">Retrieve top songs by artist with sorting</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/artists/{id}/songs" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/artists/{id}/related" data-desc="retrieve similar and related artists">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/artists/{id}/related</code>
+                <span class="route-info">Retrieve similar and related artists</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/artists/{id}/related" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/artists/by-name?name={name}" data-desc="search and retrieve artist by name query">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/artists/by-name?name={name}</code>
+                <span class="route-info">Search and retrieve artist by name query</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/artists/by-name?name={name}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Browse -->
+          <div class="route-group-panel" data-category="browse">
+            <div class="route-group-header">
+              <div class="route-group-title">
+                <h3>Browse</h3>
+                <span class="count-badge">16 routes</span>
+              </div>
+            </div>
+            <div class="route-table">
+              <div class="route-row" data-path="/api/home" data-desc="full jiosaavn homepage feed payload">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/home</code>
+                <span class="route-info">Full JioSaavn homepage feed payload</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/home" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/home/modules" data-desc="feed module metadata and section definitions">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/home/modules</code>
+                <span class="route-info">Feed module metadata and section definitions</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/home/modules" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/home/promos" data-desc="editorial promotional groups and banners">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/home/promos</code>
+                <span class="route-info">Editorial promotional groups and banners</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/home/promos" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/home/city-modules" data-desc="city-specific trending and regional modules">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/home/city-modules</code>
+                <span class="route-info">City-specific trending and regional modules</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/home/city-modules" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/home/artist-recommendations" data-desc="artist radio recommendations for home">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/home/artist-recommendations</code>
+                <span class="route-info">Artist radio recommendations for home</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/home/artist-recommendations" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/charts" data-desc="top music charts rankings and positions">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/charts</code>
+                <span class="route-info">Top music charts rankings and positions</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/charts" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/channels" data-desc="curated browse channels listing">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/channels</code>
+                <span class="route-info">Curated browse channels listing</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/channels" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/channels/{id}" data-desc="detailed channel feed with track lists">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/channels/{id}</code>
+                <span class="route-info">Detailed channel feed with track lists</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/channels/{id}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/discover" data-desc="discover new music modules and releases">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/discover</code>
+                <span class="route-info">Discover new music modules and releases</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/discover" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/genres" data-desc="music genres directory">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/genres</code>
+                <span class="route-info">Music genres directory</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/genres" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/moods" data-desc="mood-based music categories">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/moods</code>
+                <span class="route-info">Mood-based music categories</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/moods" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/music-plus" data-desc="music plus special feature stations">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/music-plus</code>
+                <span class="route-info">Music Plus special feature stations</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/music-plus" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/radio" data-desc="radio station categories">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/radio</code>
+                <span class="route-info">Radio station categories</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/radio" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/radio/{id}" data-desc="live radio station stream payload">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/radio/{id}</code>
+                <span class="route-info">Live radio station stream payload</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/radio/{id}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/radio/artists" data-desc="artist radio stations list">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/radio/artists</code>
+                <span class="route-info">Artist radio stations list</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/radio/artists" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/radio/featured" data-desc="featured radio stations list">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/radio/featured</code>
+                <span class="route-info">Featured radio stations list</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/radio/featured" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lyrics -->
+          <div class="route-group-panel" data-category="lyrics">
+            <div class="route-group-header">
+              <div class="route-group-title">
+                <h3>Lyrics</h3>
+                <span class="count-badge">3 routes</span>
+              </div>
+            </div>
+            <div class="route-table">
+              <div class="route-row" data-path="/api/lyrics?query={query}" data-desc="retrieve lyrics by song title">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/lyrics?query={query}</code>
+                <span class="route-info">Retrieve lyrics by song title</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/lyrics?query={query}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/lyrics/{id}" data-desc="retrieve lyrics by song or lyrics id">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/lyrics/{id}</code>
+                <span class="route-info">Retrieve lyrics by song or lyrics ID</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/lyrics/{id}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/lyrics/{id}/sync" data-desc="retrieve synchronized time-stamped lyrics payload">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/lyrics/{id}/sync</code>
+                <span class="route-info">Retrieve synchronized time-stamped lyrics payload</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/lyrics/{id}/sync" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Playlists -->
+          <div class="route-group-panel" data-category="playlists">
+            <div class="route-group-header">
+              <div class="route-group-title">
+                <h3>Playlists</h3>
+                <span class="count-badge">1 route</span>
+              </div>
+            </div>
+            <div class="route-table">
+              <div class="route-row" data-path="/api/playlists?id={id}" data-desc="retrieve playlist details and songs by id or link">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/playlists?id={id}</code>
+                <span class="route-info">Retrieve playlist details and songs by ID or link</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/playlists?id={id}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Podcasts -->
+          <div class="route-group-panel" data-category="podcasts">
+            <div class="route-group-header">
+              <div class="route-group-title">
+                <h3>Podcasts</h3>
+                <span class="count-badge">3 routes</span>
+              </div>
+            </div>
+            <div class="route-table">
+              <div class="route-row" data-path="/api/podcasts?id={id}" data-desc="retrieve podcast show by id or link">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/podcasts?id={id}</code>
+                <span class="route-info">Retrieve podcast show by ID or link</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/podcasts?id={id}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/podcasts/{id}" data-desc="retrieve podcast show detail and all episodes">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/podcasts/{id}</code>
+                <span class="route-info">Retrieve podcast show detail and all episodes</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/podcasts/{id}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/episodes/{id}" data-desc="retrieve single podcast episode detail">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/episodes/{id}</code>
+                <span class="route-info">Retrieve single podcast episode detail</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/episodes/{id}" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Trending -->
+          <div class="route-group-panel" data-category="trending">
+            <div class="route-group-header">
+              <div class="route-group-title">
+                <h3>Trending</h3>
+                <span class="count-badge">6 routes</span>
+              </div>
+            </div>
+            <div class="route-table">
+              <div class="route-row" data-path="/api/trending" data-desc="aggregated trending music overview">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/trending</code>
+                <span class="route-info">Aggregated trending music overview</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/trending" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/trending/songs" data-desc="top trending songs list">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/trending/songs</code>
+                <span class="route-info">Top trending songs list</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/trending/songs" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/trending/albums" data-desc="top trending albums list">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/trending/albums</code>
+                <span class="route-info">Top trending albums list</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/trending/albums" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/trending/artists" data-desc="top trending artists list">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/trending/artists</code>
+                <span class="route-info">Top trending artists list</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/trending/artists" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/trending/playlists" data-desc="top trending playlists list">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/trending/playlists</code>
+                <span class="route-info">Top trending playlists list</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/trending/playlists" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="route-row" data-path="/api/trending/podcasts" data-desc="top trending podcasts list">
+                <span class="method-tag">GET</span>
+                <code class="route-path">/api/trending/podcasts</code>
+                <span class="route-info">Top trending podcasts list</span>
+                <button class="copy-url-btn" type="button" data-copy-path="/api/trending/podcasts" title="Copy Endpoint Path">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Built with Hono, TypeScript, OpenAPI on Cloudflare Workers &amp; <strong>jio.shnwaz.dev</strong></span>
+      <div>
+        <a href="/docs">Docs</a> &bull;
+        <a href="/swagger">Swagger</a> &bull;
+        <a href="https://github.com/shnwazdeveloper/shnwazdev-jiosaavn-api" target="_blank" rel="noreferrer">GitHub Repository</a>
+      </div>
+    </footer>
+
+    <script>
+      ;(() => {
+        // Console Tab Switching
+        const tabs = document.querySelectorAll('[data-console-tab]')
+        const pathDisplay = document.getElementById('console-path')
+        const jsonDisplay = document.getElementById('console-json')
+        const statusDisplay = document.getElementById('console-status')
+
+        const consolePayloads = {
+          search: {
+            path: '/api/search?query=Believer',
+            status: '200 OK • 16ms',
+            json: JSON.stringify({
+              success: true,
+              data: {
+                total: 1,
+                start: 0,
+                results: [
+                  {
+                    id: "0W6DtW_N",
+                    name: "Believer",
+                    type: "song",
+                    year: "2017",
+                    duration: 204,
+                    label: "Interscope Records",
+                    language: "english",
+                    downloadUrl: "320kbps"
+                  }
+                ]
+              }
+            }, null, 2)
+          },
+          songs: {
+            path: '/api/songs/0W6DtW_N',
+            status: '200 OK • 12ms',
+            json: JSON.stringify({
+              success: true,
+              data: [
+                {
+                  id: "0W6DtW_N",
+                  name: "Believer",
+                  type: "song",
+                  year: "2017",
+                  duration: 204,
+                  label: "Interscope Records",
+                  url: "https://www.jiosaavn.com/song/believer/XScOACV-bVc",
+                  downloadUrl: [
+                    { quality: "320kbps", url: "https://aac.saavncdn.com/217/..._320.mp4" }
+                  ]
+                }
+              ]
+            }, null, 2)
+          },
+          trending: {
+            path: '/api/trending/songs?limit=2',
+            status: '200 OK • 22ms',
+            json: JSON.stringify({
+              success: true,
+              data: {
+                total: 50,
+                page: 1,
+                limit: 2,
+                results: [
+                  { id: "sample_1", name: "Kesariya", year: "2022" },
+                  { id: "sample_2", name: "Believer", year: "2017" }
+                ]
+              }
+            }, null, 2)
+          },
+          health: {
+            path: '/health',
+            status: '200 OK • 2ms',
+            json: JSON.stringify({
+              success: true,
+              message: "ok",
+              api: "ShnwazDev JioSaavn API",
+              version: "1.0.0"
+            }, null, 2)
+          }
+        }
+
+        tabs.forEach((tab) => {
+          tab.addEventListener('click', () => {
+            tabs.forEach((t) => t.classList.remove('active'))
+            tab.classList.add('active')
+            const key = tab.getAttribute('data-console-tab')
+            const payload = consolePayloads[key]
+            if (payload && pathDisplay && jsonDisplay && statusDisplay) {
+              pathDisplay.textContent = payload.path
+              statusDisplay.textContent = payload.status
+              jsonDisplay.textContent = payload.json
+            }
+          })
+        })
+
+        // Copy Curl Command
+        const curlBtn = document.getElementById('copy-curl-btn')
+        if (curlBtn) {
+          curlBtn.addEventListener('click', async () => {
+            const text = document.getElementById('curl-text')?.textContent || ''
+            await navigator.clipboard.writeText(text)
+            const label = curlBtn.querySelector('span')
+            if (label) {
+              const orig = label.textContent
+              label.textContent = 'Copied'
+              setTimeout(() => { label.textContent = orig }, 1500)
+            }
+          })
+        }
+
+        // Copy JSON in Console
+        const copyJsonBtn = document.getElementById('copy-json-btn')
+        if (copyJsonBtn) {
+          copyJsonBtn.addEventListener('click', async () => {
+            const text = jsonDisplay?.textContent || ''
+            await navigator.clipboard.writeText(text)
+            const orig = copyJsonBtn.textContent
+            copyJsonBtn.textContent = 'Copied'
+            setTimeout(() => { copyJsonBtn.textContent = orig }, 1500)
+          })
+        }
+
+        // Copy Individual Route Path
+        document.querySelectorAll('[data-copy-path]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const path = btn.getAttribute('data-copy-path')
+            const fullUrl = 'https://jio.shnwaz.dev' + path
+            await navigator.clipboard.writeText(fullUrl)
+            const span = btn.querySelector('span')
+            if (span) {
+              const orig = span.textContent
+              span.textContent = 'Copied'
+              setTimeout(() => { span.textContent = orig }, 1500)
+            }
+          })
+        })
+
+        // Route Filter & Search
+        const filterInput = document.getElementById('route-filter')
+        const chipBtns = document.querySelectorAll('[data-chip]')
+        const panels = document.querySelectorAll('.route-group-panel')
+        let currentCategory = 'all'
+
+        const applyFilters = () => {
+          const query = (filterInput?.value || '').toLowerCase().trim()
+
+          panels.forEach((panel) => {
+            const cat = panel.getAttribute('data-category')
+            const matchesCategory = currentCategory === 'all' || cat === currentCategory
+
+            if (!matchesCategory) {
+              panel.style.display = 'none'
+              return
+            }
+
+            let visibleCount = 0
+            const rows = panel.querySelectorAll('.route-row')
+            rows.forEach((row) => {
+              const path = row.getAttribute('data-path') || ''
+              const desc = row.getAttribute('data-desc') || ''
+              const matchesQuery = !query || path.includes(query) || desc.includes(query)
+
+              if (matchesQuery) {
+                row.style.display = 'grid'
+                visibleCount++
+              } else {
+                row.style.display = 'none'
+              }
+            })
+
+            panel.style.display = visibleCount > 0 ? 'block' : 'none'
+          })
+        }
+
+        filterInput?.addEventListener('input', applyFilters)
+
+        chipBtns.forEach((chip) => {
+          chip.addEventListener('click', () => {
+            chipBtns.forEach((c) => c.classList.remove('active'))
+            chip.classList.add('active')
+            currentCategory = chip.getAttribute('data-chip') || 'all'
+            applyFilters()
+          })
+        })
+      })()
+    </script>
+  </body>
+</html>
