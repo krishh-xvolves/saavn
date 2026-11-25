@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "saavn",
-  "account_id": "a440d05f953369e6d69d4396ceae3dc5",
+  "account_id": "f599a75948b07cadb2ac3358fc3b0ee2",
   "main": "src/server.ts",
   "compatibility_date": "2025-01-01",
   "compatibility_flags": [
